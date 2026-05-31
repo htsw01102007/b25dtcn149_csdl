@@ -1,0 +1,191 @@
+-- Tạo CSDL (Nếu chưa có) và sử dụng CSDL đó
+CREATE DATABASE IF NOT EXISTS hackathon_db;
+USE hackathon_db;
+
+-- PHẦN 1: TẠO CSDL VÀ CÁC BẢNG, CHÈN DỮ LIỆU
+
+-- 1. Tạo bảng (15 điểm)
+-- Bảng Creator
+CREATE TABLE IF NOT EXISTS Creator (
+    creator_id VARCHAR(10) PRIMARY KEY,
+    creator_name VARCHAR(100) NOT NULL,
+    creator_email VARCHAR(100),
+    creator_phone VARCHAR(15),
+    creator_platform VARCHAR(50)
+);
+
+-- Bảng Studio
+CREATE TABLE IF NOT EXISTS Studio (
+    studio_id VARCHAR(10) PRIMARY KEY,
+    studio_name VARCHAR(100) NOT NULL,
+    studio_location VARCHAR(100),
+    hourly_price DECIMAL(10, 2),
+    studio_status VARCHAR(50)
+);
+
+-- Bảng LiveSession
+CREATE TABLE IF NOT EXISTS LiveSession (
+    session_id INT PRIMARY KEY,
+    creator_id VARCHAR(10),
+    studio_id VARCHAR(10),
+    session_date DATE,
+    duration_hours INT,
+    FOREIGN KEY (creator_id) REFERENCES Creator(creator_id) ON DELETE CASCADE,
+    FOREIGN KEY (studio_id) REFERENCES Studio(studio_id) ON DELETE CASCADE
+);
+
+-- Bảng Payment
+CREATE TABLE IF NOT EXISTS Payment (
+    payment_id INT PRIMARY KEY,
+    session_id INT,
+    payment_method VARCHAR(50),
+    payment_amount DECIMAL(10, 2),
+    payment_date DATE,
+    FOREIGN KEY (session_id) REFERENCES LiveSession(session_id) ON DELETE CASCADE
+);
+
+-- 2. Chèn dữ liệu (10 điểm)
+-- Thêm dữ liệu vào bảng Creator
+INSERT INTO Creator (creator_id, creator_name, creator_email, creator_phone, creator_platform)
+VALUES 
+    ('CR01', 'Nguyen Van A', 'a@live.com', '0901111111', 'Tiktok'),
+    ('CR02', 'Tran Thi B', 'b@live.com', '0902222222', 'Youtube'),
+    ('CR03', 'Le Minh C', 'c@live.com', '0903333333', 'Facebook'),
+    ('CR04', 'Pham Thi D', 'd@live.com', '0904444444', 'Tiktok'),
+    ('CR05', 'Vu Hoang E', 'e@live.com', '0905555555', 'Shopee live');
+
+-- Thêm dữ liệu vào bảng Studio
+INSERT INTO Studio (studio_id, studio_name, studio_location, hourly_price, studio_status)
+VALUES 
+    ('ST01', 'Studio A', 'Ha Noi', 20.00, 'Available'),
+    ('ST02', 'Studio B', 'HCM', 25.00, 'Available'),
+    ('ST03', 'Studio C', 'Danang', 30.00, 'Booked'),
+    ('ST04', 'Studio D', 'Ha Noi', 22.00, 'Available'),
+    ('ST05', 'Studio E', 'Can Tho', 18.00, 'Maintenance');
+
+-- Thêm dữ liệu vào bảng LiveSession
+INSERT INTO LiveSession (session_id, creator_id, studio_id, session_date, duration_hours)
+VALUES 
+    (1, 'CR01', 'ST01', '2025-05-01', 3),
+    (2, 'CR02', 'ST02', '2025-05-02', 4),
+    (3, 'CR03', 'ST03', '2025-05-03', 2),
+    (4, 'CR01', 'ST04', '2025-05-04', 5),
+    (5, 'CR05', 'ST02', '2025-05-05', 1);
+
+-- Thêm dữ liệu vào bảng Payment
+INSERT INTO Payment (payment_id, session_id, payment_method, payment_amount, payment_date)
+VALUES 
+    (1, 1, 'Cash', 60.00, '2025-05-01'),
+    (2, 2, 'Credit Card', 100.00, '2025-05-02'),
+    (3, 3, 'Bank Transfer', 60.00, '2025-05-03'),
+    (4, 4, 'Credit Card', 110.00, '2025-05-04'),
+    (5, 5, 'Cash', 25.00, '2025-05-05');
+
+-- 3. Cập nhật creator_platform của creator CR03 thành "YouTube" (5 điểm)
+UPDATE Creator 
+SET creator_platform = 'YouTube' 
+WHERE creator_id = 'CR03';
+
+-- 4. Cập nhật studio_status = 'Available' và giảm hourly_price 10% cho ST05 (5 điểm)
+UPDATE Studio 
+SET studio_status = 'Available', 
+    hourly_price = hourly_price * 0.9 
+WHERE studio_id = 'ST05';
+
+-- 5. Xóa payment có payment_method = 'Cash' và payment_date trước ngày 2025-05-03 (5 điểm)
+DELETE FROM Payment 
+WHERE payment_method = 'Cash' 
+  AND payment_date < '2025-05-03';
+
+-- PHẦN 2: TRUY VẤN DỮ LIỆU CƠ BẢN
+
+-- 6. Liệt kê studio có studio_status = 'Available' và hourly_price > 20 (5 điểm)
+SELECT * FROM Studio 
+WHERE studio_status = 'Available' 
+  AND hourly_price > 20;
+
+-- 7. Lấy thông tin creator (creator_name, creator_phone) có nền tảng là TikTok (5 điểm)
+SELECT creator_name, creator_phone 
+FROM Creator 
+WHERE creator_platform = 'Tiktok';
+
+-- 8. Hiển thị danh sách studio gồm studio_id, studio_name, hourly_price sắp xếp theo giá thuê giảm dần (5 điểm)
+SELECT studio_id, studio_name, hourly_price 
+FROM Studio 
+ORDER BY hourly_price DESC;
+
+-- 9. Lấy 3 payment đầu tiên có payment_method = 'Credit Card' (5 điểm)
+SELECT * FROM Payment 
+WHERE payment_method = 'Credit Card' 
+LIMIT 3;
+
+-- 10. Hiển thị danh sách creator bỏ qua 2 bản ghi đầu và lấy 2 bản ghi tiếp theo (5 điểm)
+SELECT creator_id, creator_name 
+FROM Creator 
+LIMIT 2 OFFSET 2;
+
+-- PHẦN 3: TRUY VẤN DỮ LIỆU NÂNG CAO
+
+-- 1. Hiển thị danh sách livestream gồm: session_id, creator_name, studio_name, duration_hours, payment_amount (5 điểm)
+SELECT 
+    ls.session_id, 
+    c.creator_name, 
+    s.studio_name, 
+    ls.duration_hours, 
+    p.payment_amount
+FROM LiveSession ls
+JOIN Creator c ON ls.creator_id = c.creator_id
+JOIN Studio s ON ls.studio_id = s.studio_id
+LEFT JOIN Payment p ON ls.session_id = p.session_id; 
+-- Dùng LEFT JOIN để hiển thị cả session bị xóa Payment ở Câu 5
+
+-- 2. Liệt kê tất cả studio và số lần được sử dụng (kể cả studio chưa từng được thuê) (5 điểm)
+SELECT 
+    s.studio_id, 
+    s.studio_name, 
+    COUNT(ls.session_id) AS total_usage
+FROM Studio s
+LEFT JOIN LiveSession ls ON s.studio_id = ls.studio_id
+GROUP BY s.studio_id, s.studio_name;
+
+-- 3. Tính tổng doanh thu theo từng payment_method (5 điểm)
+SELECT 
+    payment_method, 
+    SUM(payment_amount) AS total_revenue
+FROM Payment
+GROUP BY payment_method;
+
+-- 4. Thống kê số session của mỗi creator chỉ hiển thị creator có từ 2 session trở lên (5 điểm)
+SELECT 
+    c.creator_id, 
+    c.creator_name, 
+    COUNT(ls.session_id) AS total_sessions
+FROM Creator c
+JOIN LiveSession ls ON c.creator_id = ls.creator_id
+GROUP BY c.creator_id, c.creator_name
+HAVING COUNT(ls.session_id) >= 2;
+
+-- 5. Lấy studio có hourly_price cao hơn mức trung bình của tất cả studio (5 điểm)
+SELECT * FROM Studio 
+WHERE hourly_price > (SELECT AVG(hourly_price) FROM Studio);
+
+-- 6. Hiển thị creator_name, creator_email của những creator đã từng livestream tại Studio B (5 điểm)
+SELECT DISTINCT 
+    c.creator_name, 
+    c.creator_email 
+FROM Creator c
+JOIN LiveSession ls ON c.creator_id = ls.creator_id
+JOIN Studio s ON ls.studio_id = s.studio_id
+WHERE s.studio_name = 'Studio B';
+
+-- 7. Hiển thị báo cáo tổng hợp gồm: session_id, creator_name, studio_name, payment_method, payment_amount (5 điểm)
+SELECT 
+    ls.session_id, 
+    c.creator_name, 
+    s.studio_name, 
+    p.payment_method, 
+    p.payment_amount
+FROM LiveSession ls
+JOIN Creator c ON ls.creator_id = c.creator_id
+JOIN Studio s ON ls.studio_id = s.studio_id
+LEFT JOIN Payment p ON ls.session_id = p.session_id;
